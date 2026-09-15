@@ -1,1 +1,7 @@
 
+{
+  "name": "inventory-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@12.4.1"
+}
