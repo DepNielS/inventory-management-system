@@ -1,1 +1,13 @@
-{"version":"7","dialect":"postgresql","entries":[]}
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789465886631,
+      "tag": "0000_first_dorian_gray",
+      "breakpoints": true
+    }
+  ]
+}
