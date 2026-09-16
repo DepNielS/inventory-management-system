@@ -6,7 +6,9 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
+
+import { RequestContext } from '../context/request-context.js';
 
 export interface SuccessResponse<T> {
   success: true;
@@ -15,12 +17,17 @@ export interface SuccessResponse<T> {
   data: T;
   timestamp: string;
   path: string;
+  requestId?: string;
 }
 
 @Injectable()
 export class ResponseInterceptor<T>
   implements NestInterceptor<T, SuccessResponse<T>>
 {
+  constructor(
+    private readonly requestContext: RequestContext,
+  ) {}
+
   intercept(
     context: ExecutionContext,
     next: CallHandler<T>,
@@ -28,7 +35,7 @@ export class ResponseInterceptor<T>
     const httpContext = context.switchToHttp();
 
     const request = httpContext.getRequest<Request>();
-    const response = httpContext.getResponse();
+    const response = httpContext.getResponse<Response>();
 
     return next.handle().pipe(
       map((data: T) => ({
@@ -38,6 +45,7 @@ export class ResponseInterceptor<T>
         data,
         timestamp: new Date().toISOString(),
         path: request.url,
+        requestId: this.requestContext.getRequestId(),
       })),
     );
   }

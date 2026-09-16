@@ -17,13 +17,15 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(
-    new HttpExceptionFilter(),
-  );
+  const httpExceptionFilter =
+    app.get(HttpExceptionFilter);
 
-  app.useGlobalInterceptors(
-    new ResponseInterceptor(),
-  );
+  const responseInterceptor =
+    app.get(ResponseInterceptor);
+
+  app.useGlobalFilters(httpExceptionFilter);
+
+  app.useGlobalInterceptors(responseInterceptor);
 
   const configService = app.get(ConfigService);
 

@@ -3,9 +3,10 @@ import {
   Catch,
   ExceptionFilter,
   HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+
+import { RequestContext } from '../context/request-context.js';
 
 interface ErrorResponseBody {
   success: false;
@@ -13,10 +14,17 @@ interface ErrorResponseBody {
   message: string | string[];
   path: string;
   timestamp: string;
+  requestId?: string;
 }
 
 @Catch(HttpException)
-export class HttpExceptionFilter implements ExceptionFilter {
+export class HttpExceptionFilter
+  implements ExceptionFilter
+{
+  constructor(
+    private readonly requestContext: RequestContext,
+  ) {}
+
   catch(
     exception: HttpException,
     host: ArgumentsHost,
@@ -49,7 +57,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
         typeof responseMessage === 'string' ||
         Array.isArray(responseMessage)
       ) {
-        message = responseMessage as string | string[];
+        message =
+          responseMessage as string | string[];
       }
     }
 
@@ -59,8 +68,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message,
       path: request.url,
       timestamp: new Date().toISOString(),
+      requestId:
+        this.requestContext.getRequestId(),
     };
 
-    response.status(statusCode).json(errorResponse);
+    response
+      .status(statusCode)
+      .json(errorResponse);
   }
 }
