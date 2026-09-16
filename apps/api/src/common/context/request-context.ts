@@ -27,6 +27,14 @@ export class RequestContext {
     return this.storage.getStore()?.requestId;
   }
 
+  getMethod(): string | undefined {
+    return this.storage.getStore()?.method;
+  }
+
+  getPath(): string | undefined {
+    return this.storage.getStore()?.path;
+  }
+
   setUserId(userId: string): void {
     const context = this.storage.getStore();
 

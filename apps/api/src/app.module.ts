@@ -19,6 +19,8 @@ import { RequestContext } from './common/context/request-context.js';
 import { RequestContextMiddleware } from './common/context/request-context.middleware.js';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
+import { AppLoggerService } from './common/logging/app-logger.service.js';
+import { RequestLoggingMiddleware } from './common/logging/request-logging.middleware.js';
 
 @Module({
   imports: [
@@ -44,6 +46,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor.
     RequestContext,
     HttpExceptionFilter,
     ResponseInterceptor,
+    AppLoggerService
   ],
 })
 export class AppModule implements NestModule {
@@ -51,7 +54,10 @@ export class AppModule implements NestModule {
     consumer: MiddlewareConsumer,
   ): void {
     consumer
-      .apply(RequestContextMiddleware)
+      .apply(
+        RequestContextMiddleware,
+        RequestLoggingMiddleware      
+      )
       .forRoutes('*');
   }
 }
