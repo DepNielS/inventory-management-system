@@ -29,6 +29,13 @@
       "when": 1789479528183,
       "tag": "0003_worthless_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789521601217,
+      "tag": "0004_damp_shotgun",
+      "breakpoints": true
     }
   ]
 }
