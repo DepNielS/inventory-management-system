@@ -36,6 +36,20 @@
       "when": 1789521601217,
       "tag": "0004_damp_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789522272467,
+      "tag": "0005_stale_black_panther",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789522570662,
+      "tag": "0006_shiny_korvac",
+      "breakpoints": true
     }
   ]
 }
