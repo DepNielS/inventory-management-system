@@ -1,4 +1,7 @@
-import { ValidationPipe } from '@nestjs/common';
+import {
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 
@@ -8,6 +11,12 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor.
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  
+  app.setGlobalPrefix('api')
+
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -23,9 +32,13 @@ async function bootstrap() {
   const responseInterceptor =
     app.get(ResponseInterceptor);
 
-  app.useGlobalFilters(httpExceptionFilter);
+  app.useGlobalFilters(
+    httpExceptionFilter,
+  );
 
-  app.useGlobalInterceptors(responseInterceptor);
+  app.useGlobalInterceptors(
+    responseInterceptor,
+  );
 
   const configService = app.get(ConfigService);
 
