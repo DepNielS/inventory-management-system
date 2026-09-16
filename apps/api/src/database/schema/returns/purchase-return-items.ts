@@ -7,23 +7,23 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { goodsReceipts } from './goods-receipts.js';
-import { purchaseOrderItems } from './purchase-order-items.js';
+import { purchaseReturns } from './purchase-returns.js';
+import { goodsReceiptItems } from '../procurement/goods-receipt-items.js';
 import { products } from '../master-data/products.js';
 import { warehouseLocations } from '../master-data/warehouse-locations.js';
 
-export const goodsReceiptItems = pgTable(
-  'goods_receipt_items',
+export const purchaseReturnItems = pgTable(
+  'purchase_return_items',
   {
     id: uuid('id').defaultRandom().primaryKey(),
 
-    goodsReceiptId: uuid('goods_receipt_id')
+    purchaseReturnId: uuid('purchase_return_id')
       .notNull()
-      .references(() => goodsReceipts.id),
+      .references(() => purchaseReturns.id),
 
-    purchaseOrderItemId: uuid('purchase_order_item_id')
+    goodsReceiptItemId: uuid('goods_receipt_item_id')
       .notNull()
-      .references(() => purchaseOrderItems.id),
+      .references(() => goodsReceiptItems.id),
 
     productId: uuid('product_id')
       .notNull()
@@ -33,7 +33,7 @@ export const goodsReceiptItems = pgTable(
       .notNull()
       .references(() => warehouseLocations.id),
 
-    receivedQty: numeric('received_qty', {
+    returnedQty: numeric('returned_qty', {
       precision: 14,
       scale: 2,
     }).notNull(),
@@ -41,7 +41,9 @@ export const goodsReceiptItems = pgTable(
     unitCost: numeric('unit_cost', {
       precision: 14,
       scale: 2,
-    }).notNull(),
+    })
+      .notNull()
+      .default('0'),
 
     createdAt: timestamp('created_at', {
       withTimezone: true,
@@ -56,29 +58,29 @@ export const goodsReceiptItems = pgTable(
       .notNull(),
   },
   (table) => ({
-    goodsReceiptIdx: index(
-      'goods_receipt_items_goods_receipt_id_idx',
-    ).on(table.goodsReceiptId),
+    purchaseReturnIdx: index(
+      'purchase_return_items_purchase_return_id_idx',
+    ).on(table.purchaseReturnId),
 
-    purchaseOrderItemIdx: index(
-      'goods_receipt_items_purchase_order_item_id_idx',
-    ).on(table.purchaseOrderItemId),
+    goodsReceiptItemIdx: index(
+      'purchase_return_items_goods_receipt_item_id_idx',
+    ).on(table.goodsReceiptItemId),
 
-    productIdx: index('goods_receipt_items_product_id_idx').on(
+    productIdx: index('purchase_return_items_product_id_idx').on(
       table.productId,
     ),
 
-    locationIdx: index('goods_receipt_items_location_id_idx').on(
+    locationIdx: index('purchase_return_items_location_id_idx').on(
       table.locationId,
     ),
 
-    receivedQtyCheck: check(
-      'goods_receipt_items_received_qty_check',
-      sql`${table.receivedQty} > 0`,
+    returnedQtyCheck: check(
+      'purchase_return_items_returned_qty_check',
+      sql`${table.returnedQty} > 0`,
     ),
 
     unitCostCheck: check(
-      'goods_receipt_items_unit_cost_check',
+      'purchase_return_items_unit_cost_check',
       sql`${table.unitCost} >= 0`,
     ),
   }),
