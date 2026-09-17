@@ -1,53 +1,44 @@
 import {
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { eq } from 'drizzle-orm';
 
 import { DATABASE } from '../../database/database.module.js';
 import type { Database } from '../../database/database.transaction.js';
 import { users } from '../../database/schema/identity/users.js';
+
+import { LoginDto } from './dto/login.dto.js';
 import { PasswordService } from './password.service.js';
-import type { LoginDto } from './dto/login.dto.js';
-import { Inject } from '@nestjs/common';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject(DATABASE)
-    private readonly db: Database,
+    @Inject(DATABASE) private readonly db: Database,
     private readonly passwordService: PasswordService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(
-    loginDto: LoginDto,
-  ) {
-    const user = await this.findUserByEmail(
-      loginDto.email,
-    );
+  async validateUser(loginDto: LoginDto) {
+    const user = await this.findUserByEmail(loginDto.email);
 
     if (!user) {
-      throw new UnauthorizedException(
-        'Invalid email or password.',
-      );
+      throw new UnauthorizedException('Invalid email or password.');
     }
 
     if (user.status !== 'ACTIVE') {
-      throw new UnauthorizedException(
-        'Invalid email or password.',
-      );
+      throw new UnauthorizedException('Invalid email or password.');
     }
 
-    const passwordValid =
-      await this.passwordService.compare(
-        loginDto.password,
-        user.passwordHash,
-      );
+    const passwordValid = await this.passwordService.compare(
+      loginDto.password,
+      user.passwordHash,
+    );
 
     if (!passwordValid) {
-      throw new UnauthorizedException(
-        'Invalid email or password.',
-      );
+      throw new UnauthorizedException('Invalid email or password.');
     }
 
     return {
@@ -59,9 +50,21 @@ export class AuthService {
     };
   }
 
-  private async findUserByEmail(
-    email: string,
-  ) {
+  async login(loginDto: LoginDto) {
+    const user = await this.validateUser(loginDto);
+
+    const accessToken = await this.jwtService.signAsync({
+      sub: user.id,
+      employeeCode: user.employeeCode,
+      email: user.email,
+    });
+
+    return {
+      accessToken,
+    };
+  }
+
+  private async findUserByEmail(email: string) {
     const result = await this.db
       .select({
         id: users.id,

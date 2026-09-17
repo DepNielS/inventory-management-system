@@ -12,6 +12,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
 import { PasswordService } from './password.service.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
+import { AuthController } from './auth.controller.js';
 
 @Module({
   imports: [
@@ -39,6 +40,8 @@ import { JwtStrategy } from './strategies/jwt.strategy.js';
       }),
     }),
   ],
+  
+  controllers: [AuthController],
 
   providers: [
     PasswordService,

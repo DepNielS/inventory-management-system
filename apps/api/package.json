@@ -16,6 +16,7 @@
     "start:prod": "node dist/main",
     "lint": "oxlint src/ test/",
     "seed": "tsx src/database/seed/seed.ts",
+    "seed:reset-admin": "tsx src/database/seed/reset-admin-password.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",

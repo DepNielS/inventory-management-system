@@ -1,136 +1,178 @@
-import {
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
-
+import { JwtService } from '@nestjs/jwt';
+import { describe, beforeEach, expect, it, vi } from 'vitest';
 import { UnauthorizedException } from '@nestjs/common';
 
 import { AuthService } from './auth.service.js';
+import { PasswordService } from './password.service.js';
 
 describe('AuthService', () => {
-  const passwordService = {
-    compare: vi.fn(),
-  };
-
   const db = {
     select: vi.fn(),
   };
 
-  const authService = new AuthService(
-    db as never,
-    passwordService as never,
-  );
+  let from: ReturnType<typeof vi.fn>;
+  let where: ReturnType<typeof vi.fn>;
+  let limit: ReturnType<typeof vi.fn>;
 
-  it('should validate an active user with correct password', async () => {
-    passwordService.compare.mockResolvedValue(true);
+  let passwordService: PasswordService;
+  let jwtService: JwtService;
+  let authService: AuthService;
+
+  beforeEach(() => {
+    limit = vi.fn();
+    where = vi.fn(() => ({
+      limit,
+    }));
+    from = vi.fn(() => ({
+      where,
+    }));
 
     db.select.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            {
-              id: 'user-id',
-              employeeCode: 'EMP-0001',
-              name: 'System Administrator',
-              email: 'admin@sinar-distribusi.local',
-              passwordHash: 'hashed-password',
-              status: 'ACTIVE',
-            },
-          ]),
-        }),
-      }),
+      from,
     });
 
-    const result =
-      await authService.validateUser({
-        email: 'admin@sinar-distribusi.local',
-        password: 'ValidPassword123!',
-      });
+    passwordService = new PasswordService();
 
-    expect(result).toEqual({
-      id: 'user-id',
-      employeeCode: 'EMP-0001',
-      name: 'System Administrator',
-      email: 'admin@sinar-distribusi.local',
-      status: 'ACTIVE',
-    });
+    vi.spyOn(passwordService, 'compare');
 
-    expect(passwordService.compare).toHaveBeenCalledWith(
-      'ValidPassword123!',
-      'hashed-password',
+    jwtService = {
+      signAsync: vi.fn(),
+    } as unknown as JwtService;
+
+    authService = new AuthService(
+      db as any,
+      passwordService,
+      jwtService,
     );
   });
 
-  it('should reject unknown user', async () => {
-    db.select.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([]),
-        }),
-      }),
+  it('should validate active user with correct password', async () => {
+    const user = {
+      id: 'user-001',
+      employeeCode: 'EMP-0001',
+      name: 'System Administrator',
+      email: 'admin@sinar-distribusi.local',
+      passwordHash: 'hashed-password',
+      status: 'ACTIVE' as const,
+    };
+
+    limit.mockResolvedValue([user]);
+    vi.mocked(passwordService.compare).mockResolvedValue(true);
+
+    const result = await authService.validateUser({
+      email: user.email,
+      password: 'correct-password',
     });
+
+    expect(passwordService.compare).toHaveBeenCalledWith(
+      'correct-password',
+      'hashed-password',
+    );
+
+    expect(result).toEqual({
+      id: user.id,
+      employeeCode: user.employeeCode,
+      name: user.name,
+      email: user.email,
+      status: user.status,
+    });
+  });
+
+  it('should reject unknown user', async () => {
+    limit.mockResolvedValue([]);
 
     await expect(
       authService.validateUser({
         email: 'unknown@sinar-distribusi.local',
-        password: 'WrongPassword123!',
+        password: 'password',
       }),
-    ).rejects.toThrow(UnauthorizedException);
+    ).rejects.toThrowError(
+      new UnauthorizedException('Invalid email or password.'),
+    );
+
+    expect(passwordService.compare).not.toHaveBeenCalled();
   });
 
   it('should reject inactive user', async () => {
-    db.select.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            {
-              id: 'user-id',
-              employeeCode: 'EMP-0001',
-              name: 'System Administrator',
-              email: 'admin@sinar-distribusi.local',
-              passwordHash: 'hashed-password',
-              status: 'INACTIVE',
-            },
-          ]),
-        }),
-      }),
-    });
+    const user = {
+      id: 'user-002',
+      employeeCode: 'EMP-0002',
+      name: 'Inactive User',
+      email: 'inactive@sinar-distribusi.local',
+      passwordHash: 'hashed-password',
+      status: 'INACTIVE' as const,
+    };
+
+    limit.mockResolvedValue([user]);
 
     await expect(
       authService.validateUser({
-        email: 'admin@sinar-distribusi.local',
-        password: 'ValidPassword123!',
+        email: user.email,
+        password: 'password',
       }),
-    ).rejects.toThrow(UnauthorizedException);
+    ).rejects.toThrowError(
+      new UnauthorizedException('Invalid email or password.'),
+    );
+
+    expect(passwordService.compare).not.toHaveBeenCalled();
   });
 
   it('should reject incorrect password', async () => {
-    passwordService.compare.mockResolvedValue(false);
+    const user = {
+      id: 'user-001',
+      employeeCode: 'EMP-0001',
+      name: 'System Administrator',
+      email: 'admin@sinar-distribusi.local',
+      passwordHash: 'hashed-password',
+      status: 'ACTIVE' as const,
+    };
 
-    db.select.mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([
-            {
-              id: 'user-id',
-              employeeCode: 'EMP-0001',
-              name: 'System Administrator',
-              email: 'admin@sinar-distribusi.local',
-              passwordHash: 'hashed-password',
-              status: 'ACTIVE',
-            },
-          ]),
-        }),
-      }),
-    });
+    limit.mockResolvedValue([user]);
+    vi.mocked(passwordService.compare).mockResolvedValue(false);
 
     await expect(
       authService.validateUser({
-        email: 'admin@sinar-distribusi.local',
-        password: 'WrongPassword123!',
+        email: user.email,
+        password: 'wrong-password',
       }),
-    ).rejects.toThrow(UnauthorizedException);
+    ).rejects.toThrowError(
+      new UnauthorizedException('Invalid email or password.'),
+    );
+  });
+
+  it('should login successfully and return access token', async () => {
+    const user = {
+      id: 'user-001',
+      employeeCode: 'EMP-0001',
+      name: 'System Administrator',
+      email: 'admin@sinar-distribusi.local',
+      status: 'ACTIVE' as const,
+    };
+
+    vi.spyOn(authService, 'validateUser').mockResolvedValue(user);
+
+    vi.mocked(jwtService.signAsync).mockResolvedValue(
+      'test-access-token',
+    );
+
+    const result = await authService.login({
+      email: user.email,
+      password: 'correct-password',
+    });
+
+    expect(authService.validateUser).toHaveBeenCalledWith({
+      email: user.email,
+      password: 'correct-password',
+    });
+
+    expect(jwtService.signAsync).toHaveBeenCalledWith({
+      sub: user.id,
+      employeeCode: user.employeeCode,
+      email: user.email,
+    });
+
+    expect(result).toEqual({
+      accessToken: 'test-access-token',
+    });
   });
 });
