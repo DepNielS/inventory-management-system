@@ -7,12 +7,17 @@ import { JwtModule } from '@nestjs/jwt';
 import type {
   JwtSignOptions,
 } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 
+import { AuthService } from './auth.service.js';
 import { PasswordService } from './password.service.js';
+import { JwtStrategy } from './strategies/jwt.strategy.js';
 
 @Module({
   imports: [
     ConfigModule,
+
+    PassportModule,
 
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -37,10 +42,13 @@ import { PasswordService } from './password.service.js';
 
   providers: [
     PasswordService,
+    AuthService,
+    JwtStrategy,
   ],
 
   exports: [
     PasswordService,
+    AuthService,
     JwtModule,
   ],
 })
