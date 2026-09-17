@@ -22,6 +22,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor.
 import { AppLoggerService } from './common/logging/app-logger.service.js';
 import { RequestLoggingMiddleware } from './common/logging/request-logging.middleware.js';
 import { HealthModule } from './health/health.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { HealthModule } from './health/health.module.js';
 
     DatabaseModule,
     HealthModule,
+    AuthModule,
   ],
 
   controllers: [AppController],
