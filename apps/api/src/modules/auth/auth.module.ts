@@ -13,6 +13,8 @@ import { AuthService } from './auth.service.js';
 import { PasswordService } from './password.service.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 import { AuthController } from './auth.controller.js';
+import { WarehouseScopeService } from './warehouse-scope.service.js';
+import { WarehouseScopeGuard } from './guards/warehouse-scope.guard.js';
 
 @Module({
   imports: [
@@ -47,12 +49,16 @@ import { AuthController } from './auth.controller.js';
     PasswordService,
     AuthService,
     JwtStrategy,
+    WarehouseScopeService,
+    WarehouseScopeGuard,
   ],
 
   exports: [
     PasswordService,
     AuthService,
     JwtModule,
+    WarehouseScopeService,
+    WarehouseScopeGuard,
   ],
 })
 export class AuthModule {}
